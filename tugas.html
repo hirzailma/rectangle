@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Persegi Panjang</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #252a31;
+            --muted: #727985;
+            --paper: #f7f8fc;
+            --panel: #ffffff;
+            --line: #e4e7ef;
+            --blue: #4285f4;
+            --violet: #9b72cb;
+            --cyan: #63c5d9;
+            --halo-blue: #e8edff;
+            --halo-cyan: #e8f8fa;
+            --input-bg: #ffffff;
+            --result-bg: linear-gradient(145deg, #f8f9ff, #f5fbfc);
+            --diagram-bg: linear-gradient(145deg, #f2f4ff, #eff9fb);
+            --divider: #d5ddcf;
+            --error: #a33f2c;
+            --shadow: 0 16px 48px rgb(49 58 89 / 9%);
+        }
+
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --ink: #e8ebf2;
+            --muted: #a4adbd;
+            --paper: #131722;
+            --panel: #1d2330;
+            --line: #363e4f;
+            --blue: #8ab4f8;
+            --violet: #c58af9;
+            --cyan: #78d7e5;
+            --halo-blue: #20263a;
+            --halo-cyan: #192b32;
+            --input-bg: #252c3a;
+            --result-bg: linear-gradient(145deg, #242a39, #202e35);
+            --diagram-bg: linear-gradient(145deg, #252a40, #1d3038);
+            --divider: #394454;
+            --error: #ff9a8d;
+            --shadow: 0 16px 48px rgb(0 0 0 / 28%);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 36px 20px;
+            color: var(--ink);
+            background: radial-gradient(ellipse at 8% 0%, var(--halo-blue) 0, transparent 34%),
+                        radial-gradient(ellipse at 100% 100%, var(--halo-cyan) 0, transparent 32%),
+                        var(--paper);
+            font-family: Arial, "Helvetica Neue", sans-serif;
+        }
+
+        main {
+            width: min(100%, 920px);
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .page-heading { min-width: 0; }
+
+        .theme-toggle {
+            flex: 0 0 auto;
+            min-height: 42px;
+            margin-top: 4px;
+            padding: 0 16px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--ink);
+            background: var(--panel);
+            font: 600 13px Arial, sans-serif;
+            cursor: pointer;
+        }
+
+        .theme-toggle:hover { border-color: var(--blue); }
+        .theme-toggle:focus-visible { outline: 3px solid rgb(66 133 244 / 35%); outline-offset: 2px; }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--blue);
+            font: 700 12px/1.4 Arial, sans-serif;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            max-width: 620px;
+            margin: 0;
+            color: transparent;
+            background: linear-gradient(100deg, #4285f4 5%, #7568d8 52%, #48a9c5 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            font-size: clamp(32px, 6vw, 54px);
+            font-weight: 500;
+            line-height: 1.05;
+        }
+
+        .intro {
+            margin: 14px 0 28px;
+            color: var(--muted);
+            font: 15px/1.6 Arial, sans-serif;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(250px, 0.85fr) minmax(0, 1.15fr);
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: var(--panel);
+            box-shadow: var(--shadow);
+        }
+
+        .controls, .diagram { padding: clamp(22px, 5vw, 38px); }
+
+        .controls { border-right: 1px solid var(--line); }
+
+        h2 {
+            margin: 0 0 22px;
+            font-size: 22px;
+            font-weight: 500;
+        }
+
+        label {
+            display: block;
+            margin: 0 0 8px;
+            font: 700 13px/1.4 Arial, sans-serif;
+        }
+
+        .field { margin-bottom: 18px; }
+
+        .input-wrap { position: relative; }
+
+        input {
+            width: 100%;
+            min-height: 48px;
+            padding: 10px 44px 10px 13px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            outline: none;
+            color: var(--ink);
+            background: var(--input-bg);
+            font: 18px Arial, sans-serif;
+        }
+
+        input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb(66 133 244 / 13%); }
+
+        .unit {
+            position: absolute;
+            top: 50%;
+            right: 14px;
+            color: var(--muted);
+            font: 14px Arial, sans-serif;
+            transform: translateY(-50%);
+        }
+
+        .hint, .error {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font: 12px/1.5 Arial, sans-serif;
+        }
+
+        .error { min-height: 18px; color: var(--error); }
+
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .result {
+            padding: 14px 12px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--result-bg);
+        }
+
+        .result-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font: 12px Arial, sans-serif;
+        }
+
+        .result strong { font-size: 22px; font-weight: 500; }
+        .result small { color: var(--muted); font: 12px Arial, sans-serif; }
+
+        .diagram {
+            display: flex;
+            min-height: 360px;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 0 0 24px 0;
+            background: var(--diagram-bg);
+        }
+
+        .diagram-title { margin: 0; font-size: 17px; font-weight: 500; }
+
+        .shape-stage {
+            display: flex;
+            min-height: 220px;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0 36px;
+        }
+
+        .rectangle {
+            position: relative;
+            display: flex;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #6b79d7;
+            border-radius: 7px;
+            background: linear-gradient(135deg, #a8c7fa, #d6c5f2 58%, #b6e7ee);
+            transition: width 180ms ease, height 180ms ease;
+        }
+
+        .rectangle[hidden] { display: none; }
+
+        .shape-placeholder {
+            margin: 0;
+            color: var(--muted);
+            font: 13px/1.5 Arial, sans-serif;
+            text-align: center;
+        }
+
+        .rectangle::after {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            color: var(--ink);
+            content: "";
+            font: 14px Arial, sans-serif;
+            transform: translate(-50%, -50%);
+        }
+
+        .measure {
+            position: absolute;
+            color: var(--ink);
+            font: 12px Arial, sans-serif;
+            white-space: nowrap;
+        }
+
+        .measure-length { top: calc(100% + 9px); left: 50%; transform: translateX(-50%); }
+        .measure-width { right: calc(100% + 9px); top: 50%; transform: translateY(-50%); }
+
+        .diagram-note {
+            margin: 0;
+            padding-top: 14px;
+            border-top: 1px solid var(--divider);
+            color: var(--muted);
+            font: 12px/1.5 Arial, sans-serif;
+        }
+
+        .credit {
+            margin: 16px 4px 0;
+            color: var(--muted);
+            font: 12px Arial, sans-serif;
+            text-align: right;
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 26px 14px; }
+            .page-header { gap: 12px; }
+            .theme-toggle { min-height: 38px; margin-top: 0; padding: 0 12px; }
+            .workspace { grid-template-columns: 1fr; }
+            .controls { border-right: 0; border-bottom: 1px solid var(--line); }
+            .diagram { min-height: 310px; }
+            .shape-stage { min-height: 190px; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header class="page-header">
+            <div class="page-heading">
+                <p class="eyebrow">Kalkulator geometri</p>
+                <h1>Luas &amp; keliling persegi panjang</h1>
+                <p class="intro">Masukkan ukuran sisi untuk melihat hasil perhitungannya.</p>
+            </div>
+            <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Aktifkan mode gelap" aria-pressed="false">Mode gelap</button>
+        </header>
+
+        <section class="workspace" aria-label="Kalkulator persegi panjang">
+            <div class="controls">
+                <h2>Ukuran sisi</h2>
+                <div class="field">
+                    <label for="panjang">Panjang</label>
+                    <div class="input-wrap">
+                        <input id="panjang" type="number" min="0.01" step="any" placeholder="Masukkan ukuran" inputmode="decimal">
+                        <span class="unit">m</span>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="lebar">Lebar</label>
+                    <div class="input-wrap">
+                        <input id="lebar" type="number" min="0.01" step="any" placeholder="Masukkan ukuran" inputmode="decimal">
+                        <span class="unit">m</span>
+                    </div>
+                    <p class="hint">Gunakan angka lebih dari 0.</p>
+                </div>
+                <p id="error" class="error" role="status" aria-live="polite"></p>
+
+                <div class="results" aria-live="polite">
+                    <div class="result">
+                        <span class="result-label">Luas</span>
+                        <strong id="luas">-</strong> <small>m<sup>2</sup></small>
+                    </div>
+                    <div class="result">
+                        <span class="result-label">Keliling</span>
+                        <strong id="keliling">-</strong> <small>m</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram">
+                <h2 class="diagram-title">Proporsi bentuk</h2>
+                <div class="shape-stage">
+                    <p id="shape-placeholder" class="shape-placeholder">Visual muncul setelah kedua ukuran diisi.</p>
+                    <div id="rectangle" class="rectangle" role="img" aria-label="Visual persegi panjang" hidden>
+                        <span id="measure-width" class="measure measure-width">-</span>
+                        <span id="measure-length" class="measure measure-length">-</span>
+                    </div>
+                </div>
+                <p class="diagram-note">Gambar mengikuti perbandingan panjang dan lebar yang kamu masukkan.</p>
+            </div>
+        </section>
+        <p class="credit">by Hirza Ilma</p>
+    </main>
+
+    <script>
+        const inputPanjang = document.getElementById("panjang");
+        const inputLebar = document.getElementById("lebar");
+        const error = document.getElementById("error");
+        const rectangle = document.getElementById("rectangle");
+        const shapePlaceholder = document.getElementById("shape-placeholder");
+        const shapeStage = document.querySelector(".shape-stage");
+        const themeToggle = document.getElementById("theme-toggle");
+        const root = document.documentElement;
+
+        function setTheme(theme) {
+            root.dataset.theme = theme;
+            const isDark = theme === "dark";
+            themeToggle.textContent = isDark ? "Mode terang" : "Mode gelap";
+            themeToggle.setAttribute("aria-label", isDark ? "Aktifkan mode terang" : "Aktifkan mode gelap");
+            themeToggle.setAttribute("aria-pressed", String(isDark));
+
+            try {
+                localStorage.setItem("theme", theme);
+            } catch {
+            }
+        }
+
+        let savedTheme = "light";
+        try {
+            savedTheme = localStorage.getItem("theme") === "dark" ? "dark" : "light";
+        } catch {
+            savedTheme = "light";
+        }
+        setTheme(savedTheme);
+        themeToggle.addEventListener("click", () => {
+            setTheme(root.dataset.theme === "dark" ? "light" : "dark");
+        });
+
+        function hitung() {
+            document.getElementById("luas").textContent = "-";
+            document.getElementById("keliling").textContent = "-";
+            rectangle.hidden = true;
+            shapePlaceholder.hidden = false;
+
+            if (inputPanjang.value === "" || inputLebar.value === "") {
+                error.textContent = "";
+                return;
+            }
+
+            const panjang = Number(inputPanjang.value);
+            const lebar = Number(inputLebar.value);
+
+            if (!Number.isFinite(panjang) || !Number.isFinite(lebar) || panjang <= 0 || lebar <= 0) {
+                error.textContent = "Panjang dan lebar harus lebih dari 0.";
+                return;
+            }
+
+            error.textContent = "";
+            rectangle.hidden = false;
+            shapePlaceholder.hidden = true;
+            document.getElementById("luas").textContent = (panjang * lebar).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+            document.getElementById("keliling").textContent = (2 * (panjang + lebar)).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+            document.getElementById("measure-length").textContent = `${panjang.toLocaleString("id-ID")} m`;
+            document.getElementById("measure-width").textContent = `${lebar.toLocaleString("id-ID")} m`;
+
+            const maxWidth = Math.min(320, Math.max(1, shapeStage.clientWidth - 56));
+            const scale = Math.min(maxWidth / panjang, 150 / lebar);
+            rectangle.style.width = `${panjang * scale}px`;
+            rectangle.style.height = `${lebar * scale}px`;
+            rectangle.setAttribute("aria-label", `Persegi panjang dengan panjang ${panjang} meter dan lebar ${lebar} meter`);
+        }
+
+        inputPanjang.addEventListener("input", hitung);
+        inputLebar.addEventListener("input", hitung);
+        window.addEventListener("resize", hitung);
+        hitung();
+    </script>
+</body>
+</html>
